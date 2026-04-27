@@ -57,13 +57,17 @@ class PairImageDataset(Dataset):
         self,
         ungraded_dir: Path,
         graded_dir: Path,
+        image_size: int = 256,
     ) -> None:
         self.ungraded_dir = ungraded_dir
         self.graded_dir = graded_dir
         self.filenames = sorted(
             f.name for f in self.ungraded_dir.iterdir() if f.is_file()
         )
-        self.to_tensor = transforms.ToTensor()
+        self.transform = transforms.Compose([
+            transforms.Resize((image_size, image_size)),
+            transforms.ToTensor(),
+        ])
 
     def __len__(self) -> int:
         return len(self.filenames)
@@ -72,4 +76,4 @@ class PairImageDataset(Dataset):
         name = self.filenames[index]
         ungraded = Image.open(self.ungraded_dir / name).convert("RGB")
         graded = Image.open(self.graded_dir / name).convert("RGB")
-        return self.to_tensor(ungraded), self.to_tensor(graded)
+        return self.transform(ungraded), self.transform(graded)
