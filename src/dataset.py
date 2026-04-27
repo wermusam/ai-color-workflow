@@ -3,7 +3,10 @@
 from pathlib import Path
 
 import numpy as np
+import torch
 from PIL import Image
+from torch.utils.data import Dataset
+from torchvision import transforms
 
 from src.transforms import GainTransform
 
@@ -45,3 +48,28 @@ class PairDataset:
             count += 1
 
         return count
+    
+
+class PairImageDataset(Dataset):
+    """PyTorch Dataset that loads ungraded/graded image pairs as tensors."""
+
+    def __init__(
+        self,
+        ungraded_dir: Path,
+        graded_dir: Path,
+    ) -> None:
+        self.ungraded_dir = ungraded_dir
+        self.graded_dir = graded_dir
+        self.filenames = sorted(
+            f.name for f in self.ungraded_dir.iterdir() if f.is_file()
+        )
+        self.to_tensor = transforms.ToTensor()
+
+    def __len__(self) -> int:
+        return len(self.filenames)
+
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
+        name = self.filenames[index]
+        ungraded = Image.open(self.ungraded_dir / name).convert("RGB")
+        graded = Image.open(self.graded_dir / name).convert("RGB")
+        return self.to_tensor(ungraded), self.to_tensor(graded)

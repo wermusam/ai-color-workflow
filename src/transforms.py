@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 class GainTransform:
     """Multiplies R, G, B channels by separate values to apply a color grade."""
 

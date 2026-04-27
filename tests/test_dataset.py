@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from src.dataset import PairDataset
+from src.dataset import PairDataset, PairImageDataset
 from src.transforms import GainTransform
 
 
@@ -32,3 +32,16 @@ def test_generate_pairs_creates_graded_and_ungraded_files(tmp_path: Path) -> Non
     assert count == 1
     assert (graded_dir / "test_image.jpg").exists()
     assert (ungraded_dir / "test_image.jpg").exists()
+
+
+def test_pair_image_dataset_loads_pairs() -> None:
+    dataset = PairImageDataset(
+        ungraded_dir=Path("data/ungraded"),
+        graded_dir=Path("data/graded"),
+    )
+    assert len(dataset) == 12
+
+    ungraded, graded = dataset[0]
+    assert ungraded.shape[0] == 3  # RGB channels
+    assert graded.shape[0] == 3
+    assert ungraded.shape == graded.shape
