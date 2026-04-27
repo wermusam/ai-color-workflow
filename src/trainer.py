@@ -24,6 +24,7 @@ class Trainer:
         epochs: int = 100,
         batch_size: int = 4,
         learning_rate: float = 1e-3,
+        image_size: int = 512,
     ) -> None:
         self.ungraded_dir = Path(ungraded_dir)
         self.graded_dir = Path(graded_dir)
@@ -32,6 +33,7 @@ class Trainer:
         self.epochs = epochs
         self.batch_size = batch_size
         self.learning_rate = learning_rate
+        self.image_size = image_size
         self.loss_history: list[float] = []
 
     def run(self) -> float:
@@ -41,6 +43,7 @@ class Trainer:
         dataset = PairImageDataset(
             ungraded_dir=self.ungraded_dir,
             graded_dir=self.graded_dir,
+            image_size=self.image_size,
         )
         dataloader = DataLoader(
             dataset,
