@@ -1,9 +1,8 @@
-from src.generator import PairGenerator
+from src.viewer import PairViewer
 
 if __name__ == "__main__":
-    PairGenerator(
+    PairViewer(
         raw_dir="data/raw",
         graded_dir="data/graded",
         ungraded_dir="data/ungraded",
-        red=1.3, green=1.05, blue=0.8,
     ).run()
