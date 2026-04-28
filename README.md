@@ -46,7 +46,7 @@ That installs all dependencies into a project-local virtual environment.
 
 ---
 
-## Step 1 — Inspect the starting state
+## Step 1: Inspect the starting state
 
 The repo ships with 11 sunset photographs in `data/raw/`. The other directories are empty until the pipeline runs.
 
@@ -56,7 +56,7 @@ The repo ships with 11 sunset photographs in `data/raw/`. The other directories 
 
 ---
 
-## Step 2 — Generate training pairs
+## Step 2: Generate training pairs
 
 ```
 uv run python -m scripts.generate_pairs
@@ -70,7 +70,7 @@ After this step, `data/graded/` and `data/ungraded/` are populated with 11 pairs
 
 ---
 
-## Step 3 — Inspect the data before training
+## Step 3: Inspect the data before training
 
 ```
 uv run python -m scripts.view_pairs
@@ -86,7 +86,7 @@ Click through all 11 pairs with the navigation buttons to QA the data before com
 
 ---
 
-## Step 4 — Train the model
+## Step 4: Train the model
 
 ```
 uv run python -m scripts.train
@@ -104,7 +104,7 @@ The exponential decay is the expected signature of a healthy training run on a l
 
 ---
 
-## Step 5 — Run inference on the training set
+## Step 5: Run inference on the training set
 
 ```
 uv run python -m scripts.predict
@@ -116,7 +116,7 @@ Loads the trained weights and predicts a graded version for every ungraded input
 
 ---
 
-## Step 6 — Review the model's output
+## Step 6: Review the model's output
 
 ```
 uv run python -m scripts.view_pairs
@@ -130,7 +130,7 @@ Same viewer command, but the Prediction panel is now populated. Click through ea
 
 ---
 
-## Step 7 — Held-out test
+## Step 7: Held-out test
 
 A sunset image the model never saw during training, processed via the same `predict` script:
 
