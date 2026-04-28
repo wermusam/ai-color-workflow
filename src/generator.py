@@ -32,5 +32,5 @@ class PairGenerator:
             transform=self.transform,
         )
         count = dataset.generate_pairs()
-        print(f"Generated {count} pairs.")
+        print(f"Generated {count} pairs in {self.graded_dir} and {self.ungraded_dir}")
         return count

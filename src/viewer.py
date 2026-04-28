@@ -8,17 +8,22 @@ from dash import Dash, Input, Output, State, ctx, html
 
 
 class PairViewer:
-    """Dash app for inspecting raw/graded/ungraded image pairs."""
+    """Dash app for inspecting parallel image directories."""
 
     def __init__(
         self,
-        raw_dir: str,
-        graded_dir: str,
-        ungraded_dir: str,
+        panels: list[tuple[str, str]],
     ) -> None:
-        self.raw_dir = Path(raw_dir)
-        self.graded_dir = Path(graded_dir)
-        self.ungraded_dir = Path(ungraded_dir)
+        """Build a viewer from a list of (label, directory) tuples.
+
+        The first panel determines which filenames are shown.
+        """
+        if not panels:
+            raise ValueError("panels must contain at least one (label, directory) pair")
+
+        self.panels: list[tuple[str, Path]] = [
+            (label, Path(directory)) for label, directory in panels
+        ]
 
     @staticmethod
     def _natural_key(filename: str) -> tuple:
@@ -27,12 +32,10 @@ class PairViewer:
         return tuple(int(p) if p.isdigit() else p for p in parts)
 
     def list_pairs(self) -> list[str]:
-        """Return naturally-sorted filenames present in all three directories."""
-        raw_files = {f.name for f in self.raw_dir.iterdir() if f.is_file()}
-        graded_files = {f.name for f in self.graded_dir.iterdir() if f.is_file()}
-        ungraded_files = {f.name for f in self.ungraded_dir.iterdir() if f.is_file()}
-        common = raw_files & graded_files & ungraded_files
-        return sorted(common, key=self._natural_key)
+        """Return naturally-sorted filenames from the first panel's directory."""
+        first_dir = self.panels[0][1]
+        filenames = [f.name for f in first_dir.iterdir() if f.is_file()]
+        return sorted(filenames, key=self._natural_key)
 
     def _encode_image(self, path: Path) -> str:
         """Read an image file and return a base64 data URI."""
@@ -41,11 +44,7 @@ class PairViewer:
         return f"data:image/jpeg;base64,{encoded}"
 
     def _build_panels(self, filename: str) -> list:
-        """Build the three image panels for a given pair filename."""
-        raw_src = self._encode_image(self.raw_dir / filename)
-        graded_src = self._encode_image(self.graded_dir / filename)
-        ungraded_src = self._encode_image(self.ungraded_dir / filename)
-
+        """Build all panels for a given filename, with placeholders for missing files."""
         font_family = (
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', "
             "Roboto, Oxygen, Ubuntu, sans-serif"
@@ -60,30 +59,61 @@ class PairViewer:
             "fontSize": "14px",
         }
         image_style = {"width": "100%", "borderRadius": "4px"}
+        placeholder_style = {
+            "width": "100%",
+            "aspectRatio": "16 / 9",
+            "backgroundColor": "#2a2a2a",
+            "border": "1px dashed #4a4a4a",
+            "borderRadius": "4px",
+            "display": "flex",
+            "flexDirection": "column",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "color": "#707070",
+            "fontSize": "13px",
+            "padding": "16px",
+        }
 
-        return [
-            html.Div(
-                style=panel_style,
-                children=[
-                    html.H4("Raw", style=label_style),
-                    html.Img(src=raw_src, style=image_style),
-                ],
-            ),
-            html.Div(
-                style=panel_style,
-                children=[
-                    html.H4("Graded", style=label_style),
-                    html.Img(src=graded_src, style=image_style),
-                ],
-            ),
-            html.Div(
-                style=panel_style,
-                children=[
-                    html.H4("Ungraded", style=label_style),
-                    html.Img(src=ungraded_src, style=image_style),
-                ],
-            ),
-        ]
+        children = []
+        for label, directory in self.panels:
+            image_path = directory / filename
+
+            if image_path.exists():
+                content = html.Img(src=self._encode_image(image_path), style=image_style)
+            else:
+                content = html.Div(
+                    children=[
+                        html.Div(
+                            "Not generated yet",
+                            style={"fontWeight": "500", "marginBottom": "12px"},
+                        ),
+                        html.Div(
+                            "Expected directory:",
+                            style={"fontSize": "11px", "color": "#909090"},
+                        ),
+                        html.Div(
+                            str(directory),
+                            style={
+                                "fontSize": "11px",
+                                "color": "#909090",
+                                "fontFamily": "monospace",
+                                "marginTop": "2px",
+                            },
+                        ),
+                    ],
+                    style=placeholder_style,
+                )
+
+            children.append(
+                html.Div(
+                    style=panel_style,
+                    children=[
+                        html.H4(label, style=label_style),
+                        content,
+                    ],
+                )
+            )
+        return children
 
     def run(self) -> None:
         """Start the Dash server."""

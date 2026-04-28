@@ -1,5 +1,6 @@
 """Trainer class for the color grading model."""
 
+import time
 from pathlib import Path
 
 import plotly.graph_objects as go
@@ -38,6 +39,7 @@ class Trainer:
 
     def run(self) -> float:
         """Train the model and save weights. Returns final average loss."""
+
         self.output_path.parent.mkdir(parents=True, exist_ok=True)
 
         dataset = PairImageDataset(
@@ -55,7 +57,16 @@ class Trainer:
         loss_fn = nn.MSELoss()
         optimizer = optim.Adam(model.parameters(), lr=self.learning_rate)
 
+        param_count = sum(p.numel() for p in model.parameters())
+        print(f"Model: ColorGradeNet ({param_count:,} parameters)")
+        print(f"Training on {len(dataset)} pairs at {self.image_size}x{self.image_size}")
+        print(f"Epochs: {self.epochs}, batch size: {self.batch_size}, lr: {self.learning_rate}")
+        print("-" * 60)
+
+        start_time = time.time()
+
         for epoch in range(self.epochs):
+            epoch_start = time.time()
             total_loss = 0.0
             num_batches = 0
 
@@ -74,7 +85,16 @@ class Trainer:
             self.loss_history.append(avg_loss)
 
             if (epoch + 1) % 10 == 0:
-                print(f"Epoch {epoch + 1}/{self.epochs}  loss={avg_loss:.6f}")
+                epoch_time = time.time() - epoch_start
+                print(
+                    f"Epoch {epoch + 1:3d}/{self.epochs}  "
+                    f"loss={avg_loss:.6f}  "
+                    f"({epoch_time:.2f}s/epoch)"
+                )
+
+        total_time = time.time() - start_time
+        print("-" * 60)
+        print(f"Training complete in {total_time:.1f}s ({total_time / 60:.1f} min)")
 
         torch.save(model.state_dict(), self.output_path)
         print(f"Saved model to {self.output_path}")
