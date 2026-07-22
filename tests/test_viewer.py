@@ -1,5 +1,7 @@
 """Tests for PairViewer."""
 
+from pathlib import Path
+
 from src.viewer import PairViewer
 
 
@@ -20,10 +22,11 @@ def test_viewer_can_be_constructed() -> None:
     assert viewer.panels[0][1].name == "raw"
 
 
-def test_viewer_lists_all_twelve_sunsets() -> None:
+def test_viewer_lists_all_sunsets() -> None:
     viewer = _make_viewer()
     pairs = viewer.list_pairs()
-    assert len(pairs) == 12
+    expected = len(list(Path("data/raw").glob("*.jpg")))
+    assert len(pairs) == expected
 
 
 def test_viewer_lists_sunsets_in_natural_order() -> None:
@@ -32,7 +35,7 @@ def test_viewer_lists_sunsets_in_natural_order() -> None:
     assert pairs[0] == "sunset_1.jpg"
     assert pairs[1] == "sunset_2.jpg"
     assert pairs[9] == "sunset_10.jpg"
-    assert pairs[11] == "sunset_12.jpg"
+    assert pairs[10] == "sunset_11.jpg"
 
 
 def test_viewer_requires_at_least_one_panel() -> None:

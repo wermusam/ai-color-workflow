@@ -35,11 +35,13 @@ def test_generate_pairs_creates_graded_and_ungraded_files(tmp_path: Path) -> Non
 
 
 def test_pair_image_dataset_loads_pairs() -> None:
+    ungraded_dir = Path("data/ungraded")
     dataset = PairImageDataset(
-        ungraded_dir=Path("data/ungraded"),
+        ungraded_dir=ungraded_dir,
         graded_dir=Path("data/graded"),
     )
-    assert len(dataset) == 12
+    expected_pairs = len(list(ungraded_dir.glob("*.jpg")))
+    assert len(dataset) == expected_pairs
 
     ungraded, graded = dataset[0]
     assert ungraded.shape[0] == 3  # RGB channels
