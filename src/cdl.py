@@ -1,5 +1,7 @@
 """Color decision list (ASC CDL) for the AI color workflow."""
 
+from pathlib import Path
+
 import numpy as np
 
 
@@ -46,3 +48,37 @@ class Cdl:
         graded[:, :, 2] = luma + self.saturation * (graded[:, :, 2] - luma)
 
         return np.clip(graded, 0.0, 1.0)
+
+    def to_cdl_string(self, cc_id: str = "ai-color-workflow") -> str:
+        """Return this grade as an ASC CDL (ColorDecisionList) XML string.
+
+        cc_id names the ColorCorrection so a color tool can reference this grade.
+        """
+        slope = f"{self.slope[0]} {self.slope[1]} {self.slope[2]}"
+        offset = f"{self.offset[0]} {self.offset[1]} {self.offset[2]}"
+        power = f"{self.power[0]} {self.power[1]} {self.power[2]}"
+
+        lines = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<ColorDecisionList xmlns="urn:ASC:CDL:v1.01">',
+            "  <ColorDecision>",
+            f'    <ColorCorrection id="{cc_id}">',
+            "      <SOPNode>",
+            f"        <Slope>{slope}</Slope>",
+            f"        <Offset>{offset}</Offset>",
+            f"        <Power>{power}</Power>",
+            "      </SOPNode>",
+            "      <SatNode>",
+            f"        <Saturation>{self.saturation}</Saturation>",
+            "      </SatNode>",
+            "    </ColorCorrection>",
+            "  </ColorDecision>",
+            "</ColorDecisionList>",
+        ]
+        return "\n".join(lines) + "\n"
+
+    def export(self, path: str) -> None:
+        """Write this grade to an ASC CDL file at the given path."""
+        output_path = Path(path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(self.to_cdl_string(), encoding="utf-8")

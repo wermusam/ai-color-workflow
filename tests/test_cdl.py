@@ -1,5 +1,7 @@
 """Tests for the color decision list (CDL) class."""
 
+from pathlib import Path
+
 import numpy as np
 
 from src.cdl import Cdl
@@ -54,3 +56,37 @@ def test_cdl_apply_saturation_zero_makes_gray() -> None:
 
     # luma of pure red = 0.2126 (Rec. 709), so every channel becomes 0.2126.
     np.testing.assert_allclose(result[0, 0], [0.2126, 0.2126, 0.2126], atol=1e-4)
+
+
+def test_cdl_to_cdl_string_contains_the_values() -> None:
+    """to_cdl_string() should embed slope, offset, power, and saturation."""
+    grade = Cdl(
+        slope=(1.2, 1.05, 0.9),
+        offset=(0.0, 0.0, 0.0),
+        power=(1.0, 1.0, 1.0),
+        saturation=1.0,
+    )
+
+    text = grade.to_cdl_string()
+
+    assert "<Slope>1.2 1.05 0.9</Slope>" in text
+    assert "<Offset>0.0 0.0 0.0</Offset>" in text
+    assert "<Power>1.0 1.0 1.0</Power>" in text
+    assert "<Saturation>1.0</Saturation>" in text
+    assert "<ColorDecisionList" in text
+
+
+def test_cdl_export_writes_a_file(tmp_path: Path) -> None:
+    """export() should write the CDL text to a readable file."""
+    grade = Cdl(
+        slope=(1.2, 1.05, 0.9),
+        offset=(0.0, 0.0, 0.0),
+        power=(1.0, 1.0, 1.0),
+        saturation=1.0,
+    )
+    output_path = tmp_path / "grade.cdl"
+
+    grade.export(str(output_path))
+
+    assert output_path.exists()
+    assert "<Slope>1.2 1.05 0.9</Slope>" in output_path.read_text()
