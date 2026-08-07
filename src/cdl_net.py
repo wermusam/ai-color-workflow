@@ -16,8 +16,19 @@ class CdlNet(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Predict 10 numbers per image: slope(3), offset(3), power(3), saturation(1).
+
+        The numbers are squashed into sensible ranges so slope and power stay
+        positive, which keeps the grade math from blowing up.
+        """
         x = self.relu(self.conv1(x))
         x = self.relu(self.conv2(x))
         x = self.pool(x)
         x = torch.flatten(x, 1)
-        return self.fc(x)
+        raw = self.fc(x)
+
+        slope = torch.sigmoid(raw[:, 0:3]) * 2.0
+        offset = torch.tanh(raw[:, 3:6]) * 0.5
+        power = torch.sigmoid(raw[:, 6:9]) * 2.0 + 0.1
+        saturation = torch.sigmoid(raw[:, 9:10]) * 2.0
+        return torch.cat([slope, offset, power, saturation], dim=1)
