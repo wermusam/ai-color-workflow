@@ -6,6 +6,43 @@ Built as a learning exercise to validate the architecture of a studio-grade AI c
 
 ---
 
+## The model predicts an editable color recipe (a CDL)
+
+The first version of this tool trained a small AI to repaint the graded image directly. This update takes the next step from the "next steps" list further down. Instead of repainting the picture, the AI now looks at a shot and predicts a CDL, the color recipe, and that recipe is applied to create the graded look.
+
+A CDL (ASC Color Decision List) is a standard primary grade: ten numbers, a slope, offset, and power for red, green, and blue, plus one overall saturation. It is the same kind of primary color adjustment a dailies colorist already works with every day.
+
+Because the AI predicts a recipe instead of a baked picture, the result is:
+
+- Editable. A colorist can open the ten numbers and adjust them, like any normal grade.
+- Sharp. The recipe applies at full resolution, so nothing is blurred or downscaled.
+- Pipeline friendly. It saves as a standard `.cdl` file that Nuke, DaVinci Resolve, and on-set tools already read.
+
+### How it works, in four steps
+
+1. Start with pairs of images: an ungraded shot and the graded version a colorist made.
+2. Train a small model to look at the ungraded shot and predict the CDL that turns it into the graded one.
+3. Run the model on shots. For each one it predicts a CDL and applies it.
+4. Review the result beside the original.
+
+### Try it
+
+```
+uv run python -m scripts.train_cdl      # train the model on the image pairs
+uv run python -m scripts.predict_cdl    # predict and apply a grade to every shot
+uv run python -m scripts.view_cdl       # open the before and after viewer
+```
+
+In the viewer: left is the ungraded shot, middle is the grade the AI predicted, right is the colorist's target. The middle should closely match the right.
+
+![CDL prediction before and after](docs/screenshots/cdl_prediction.png)
+
+### Status
+
+This is a working proof of the idea, not a finished product. The training images all use one consistent look, so the model learns that one look and applies it to everything. Teaching it to adapt shot by shot is the real next step, and that needs real footage with a range of looks rather than these synthetic examples.
+
+---
+
 ## What's in the project
 
 ```
