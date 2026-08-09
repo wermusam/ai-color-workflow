@@ -8,7 +8,7 @@ Built as a learning exercise to validate the architecture of a studio-grade AI c
 
 ## The model predicts an editable color recipe (a CDL)
 
-The first version of this tool trained a small AI to repaint the graded image directly. This update takes the next step from the "next steps" list further down. Instead of repainting the picture, the AI now looks at a shot and predicts a CDL, the color recipe, and that recipe is applied to create the graded look.
+The first version of this tool trained a small AI to repaint the graded image directly. Instead of repainting the picture, the AI now looks at a shot and predicts a CDL, the color recipe, and that recipe is applied to create the graded look.
 
 A CDL (ASC Color Decision List) is a standard primary grade: ten numbers, a slope, offset, and power for red, green, and blue, plus one overall saturation. It is the same kind of primary color adjustment a dailies colorist already works with every day.
 
@@ -59,7 +59,10 @@ ai-color-workflow/
 │   ├── generate_pairs.py
 │   ├── train.py
 │   ├── predict.py
-│   └── view_pairs.py
+│   ├── view_pairs.py
+│   ├── train_cdl.py
+│   ├── predict_cdl.py
+│   └── view_cdl.py
 ├── src/             # core classes
 │   ├── transforms.py    # GainTransform — channel gain math
 │   ├── dataset.py       # PairDataset, PairImageDataset
@@ -67,7 +70,12 @@ ai-color-workflow/
 │   ├── model.py         # ColorGradeNet — CNN architecture
 │   ├── trainer.py       # Trainer — training loop with timing & loss plot
 │   ├── predictor.py     # Predictor — inference, single & batch
-│   └── viewer.py        # PairViewer — Dash inspection app
+│   ├── viewer.py        # PairViewer — Dash inspection app
+│   ├── cdl.py            # Cdl, holds and applies a CDL grade
+│   ├── cdl_torch.py      # TorchCdl, the CDL grade in PyTorch
+│   ├── cdl_net.py        # CdlNet, predicts the 10 CDL numbers
+│   ├── cdl_trainer.py    # CdlTrainer, trains CdlNet
+│   └── cdl_predictor.py  # CdlPredictor, predicts a Cdl for an image
 └── tests/           # pytest suite
 ```
 
@@ -191,7 +199,7 @@ The held-out test was trained only on warm sunset photographs, so it pushes inpu
 uv run pytest -v
 ```
 
-14 tests covering the core classes — transforms, dataset, generator, model, trainer, predictor, and viewer.
+The pytest suite covers every class in `src/`.
 
 ---
 
@@ -207,6 +215,11 @@ uv run pytest -v
 | `Trainer` | Training loop with timing, loss tracking, Plotly loss curve |
 | `Predictor` | Inference for a single image or an entire directory |
 | `PairViewer` | Dash app for side-by-side panel inspection |
+| `Cdl` | Holds a CDL grade and applies it to an image |
+| `TorchCdl` | The CDL grade in PyTorch, used for training |
+| `CdlNet` | Small CNN that predicts the 10 CDL numbers from an image |
+| `CdlTrainer` | Trains CdlNet on the image pairs |
+| `CdlPredictor` | Predicts a Cdl for an image with a trained CdlNet |
 
 ---
 
@@ -215,7 +228,7 @@ uv run pytest -v
 This prototype validates the end-to-end pipeline architecture. It is not a finished product, and the data setup is intentionally simple. Real production work would extend it in several directions:
 
 - **Real footage instead of synthetic pairs.** The current setup invertibly transforms graded targets to fake ungraded inputs, so the model is learning to invert a deterministic operation. Real ungraded plates and colorist passes would test the architecture against a much harder learning problem.
-- **LUT prediction.** Production color tools typically predict reusable color recipes (Color Decision Lists, 3D LUTs) rather than pixel-to-pixel mappings. This makes outputs editable, shareable, and resolution-independent.
+- **3D LUT prediction.** A CDL handles a primary grade. A 3D LUT could capture richer looks a CDL cannot, and it loads into the same tools.
 - **Larger model.** A U-Net or similar architecture would capture more spatial context and produce sharper outputs at native resolution.
 - **Diverse training data.** As the held-out test shows, the model's outputs are biased toward its training distribution. Studio data covering multiple genres and looks would generalize much better.
 - **Evaluation metrics beyond MSE.** PSNR, SSIM, and perceptual losses (LPIPS) are standard for image-to-image regression and would give a more honest picture of perceptual quality.
