@@ -181,7 +181,7 @@ uv run python -m scripts.predict --input data/holdout/sunset_test.jpg --output d
 |---|---|
 | ![Holdout input](docs/screenshots/sunset_test.jpg) | ![Holdout prediction](docs/screenshots/sunset_test_predicted.jpg) |
 
-The held-out test reveals an honest limitation: the model was trained only on warm sunset photographs, so it pushes inputs toward that distribution. This is the expected behavior of a model trained on biased data, and is one of the reasons production training would draw from diverse footage covering many color profiles.
+The held-out test was trained only on warm sunset photographs, so it pushes inputs toward that distribution. This is the expected behavior of a model trained on biased data, and is one of the reasons production training would draw from diverse footage covering many color profiles.
 
 ---
 
@@ -210,12 +210,12 @@ uv run pytest -v
 
 ---
 
-## Honest limitations and next steps
+## Next steps
 
 This prototype validates the end-to-end pipeline architecture. It is not a finished product, and the data setup is intentionally simple. Real production work would extend it in several directions:
 
 - **Real footage instead of synthetic pairs.** The current setup invertibly transforms graded targets to fake ungraded inputs, so the model is learning to invert a deterministic operation. Real ungraded plates and colorist passes would test the architecture against a much harder learning problem.
-- **CDL or LUT prediction.** Production color tools typically predict reusable color recipes (Color Decision Lists, 3D LUTs) rather than pixel-to-pixel mappings. This makes outputs editable, shareable, and resolution-independent.
+- **LUT prediction.** Production color tools typically predict reusable color recipes (Color Decision Lists, 3D LUTs) rather than pixel-to-pixel mappings. This makes outputs editable, shareable, and resolution-independent.
 - **Larger model.** A U-Net or similar architecture would capture more spatial context and produce sharper outputs at native resolution.
 - **Diverse training data.** As the held-out test shows, the model's outputs are biased toward its training distribution. Studio data covering multiple genres and looks would generalize much better.
 - **Evaluation metrics beyond MSE.** PSNR, SSIM, and perceptual losses (LPIPS) are standard for image-to-image regression and would give a more honest picture of perceptual quality.

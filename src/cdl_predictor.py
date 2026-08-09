@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import numpy as np
 import torch
 from PIL import Image
 from torchvision import transforms
@@ -45,3 +46,28 @@ class CdlPredictor:
         power = (float(numbers[6]), float(numbers[7]), float(numbers[8]))
         saturation = float(numbers[9])
         return Cdl(slope, offset, power, saturation)
+
+    def predict_and_apply(self, input_path: str, output_path: str) -> None:
+        """Predict a CDL, apply it to the full-resolution image, and save the result."""
+        grade = self.predict(input_path)
+
+        image = Image.open(input_path).convert("RGB")
+        array = np.asarray(image, dtype=np.float32) / 255.0
+        graded = grade.apply(array)
+        result = Image.fromarray((graded * 255.0).astype(np.uint8))
+        result.save(output_path)
+
+    def predict_all(self, input_dir: str, output_dir: str) -> int:
+        """Predict and apply a CDL for every image in input_dir. Returns the count."""
+        input_dir = Path(input_dir)
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        files = sorted(f for f in input_dir.iterdir() if f.is_file())
+        count = 0
+        for input_path in files:
+            self.predict_and_apply(str(input_path), str(output_dir / input_path.name))
+            count += 1
+
+        print(f"Graded {count} images, saved to {output_dir}")
+        return count
